@@ -5,6 +5,7 @@ metadata:
   labels:
     {{- include "db.labels" . | nindent 4 }}
 spec:
+  serviceName: {{ include "db.fullname" . }}
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
@@ -68,7 +69,6 @@ spec:
         - name: postgresql-initdb
           configMap:
             name: kbmicro-configmap
-            key: initdb.sql
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
