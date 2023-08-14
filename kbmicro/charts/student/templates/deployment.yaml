@@ -37,6 +37,17 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          env:
+            - name: DB_HOST
+              value: db
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              value: students_db
+            - name: DB_USERNAME
+              value: postgres
+            - name: DB_PASSWORD
+              value: password
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness

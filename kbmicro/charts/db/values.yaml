@@ -38,7 +38,7 @@ securityContext:
 
 service:
   type: ClusterIP
-  port: 5731
+  port: 5432
 
 ingress:
   enabled: false
