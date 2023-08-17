@@ -1,16 +1,17 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: {{ include "student.fullname" . }}
+  name: {{ include "db.fullname" . }}
   labels:
-    {{- include "student.labels" . | nindent 4 }}
+    {{- include "db.labels" . | nindent 4 }}
 spec:
+  serviceName: {{ include "db.fullname" . }}
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "student.selectorLabels" . | nindent 6 }}
+      {{- include "db.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,13 +19,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "student.selectorLabels" . | nindent 8 }}
+        {{- include "db.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "student.serviceAccountName" . }}
+      serviceAccountName: {{ include "db.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -38,30 +39,37 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
-            - name: DB_HOST
-              value: db
-            - name: DB_PORT
-              value: "5432"
-            - name: DB_DATABASE
-              value: students_db
-            - name: DB_USERNAME
+            - name: POSTGRES_USER
               value: postgres
-            - name: DB_PASSWORD
+            - name: POSTGRES_PASSWORD
               value: password
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: http
-            initialDelaySeconds: 60
-            periodSeconds: 30
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: http
-            initialDelaySeconds: 60
-            periodSeconds: 30
+            - name: POSTGRES_DB
+              value: kbmicro-db
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: db-data
+            - mountPath: /docker-entrypoint-initdb.d
+              name: postgresql-initdb
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: kbmicro-persistent-volume-claim
+        - name: postgresql-initdb
+          configMap:
+            name: kbmicro-configmap
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

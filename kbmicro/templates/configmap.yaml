@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kbmicro-configmap
+data:
+  initdb.sql: |
+    CREATE DATABASE students_db;
+    CREATE DATABASE employees_db;
+    \c students_db;
+    CREATE TABLE students(
+      ID SERIAL PRIMARY KEY,
+      NAME VARCHAR NOT NULL
+    );
+    \c employees_db; 
+    CREATE TABLE employees(
+      ID SERIAL PRIMARY KEY,
+      NAME VARCHAR NOT NULL
+    );
